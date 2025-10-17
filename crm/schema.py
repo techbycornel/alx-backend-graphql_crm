@@ -1,9 +1,10 @@
-import graphene
-from graphene_django import DjangoObjectType
-from .models import Customer, Product, Order
-from django.db import transaction
 import re
 from datetime import datetime
+from django.db import transaction
+import graphene
+from graphene_django import DjangoObjectType
+from graphene_django.filter import DjangoFilterConnectionField
+from .models import Customer, Product, Order
 
 # -------------------
 # TYPES
@@ -23,6 +24,12 @@ class OrderType(DjangoObjectType):
         model = Order
         fields = "__all__"
 
+# Node type for filtering
+class CustomerNode(DjangoObjectType):
+    class Meta:
+        model = Customer
+        filter_fields = ['name', 'email']
+        interfaces = (graphene.relay.Node,)
 
 # -------------------
 # MUTATIONS
@@ -111,14 +118,16 @@ class CreateOrder(graphene.Mutation):
 
         return CreateOrder(order=order)
 
-
 # -------------------
-# ROOT SCHEMA
+# ROOT QUERY
 # -------------------
 class Query(graphene.ObjectType):
     all_customers = graphene.List(CustomerType)
     all_products = graphene.List(ProductType)
     all_orders = graphene.List(OrderType)
+
+    # Added filtered connection field
+    filtered_customers = DjangoFilterConnectionField(CustomerNode)
 
     def resolve_all_customers(root, info):
         return Customer.objects.all()
@@ -129,9 +138,13 @@ class Query(graphene.ObjectType):
     def resolve_all_orders(root, info):
         return Order.objects.all()
 
-
+# -------------------
+# ROOT MUTATION
+# -------------------
 class Mutation(graphene.ObjectType):
     create_customer = CreateCustomer.Field()
     bulk_create_customers = BulkCreateCustomers.Field()
     create_product = CreateProduct.Field()
     create_order = CreateOrder.Field()
+
+schema = graphene.Schema(query=Query, mutation=Mutation)
