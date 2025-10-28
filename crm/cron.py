@@ -16,17 +16,18 @@ def update_low_stock():
         f.write(f"{datetime.datetime.now()} - {data}\n")
 
 def log_crm_heartbeat():
-    """Log heartbeat and optionally verify GraphQL hello query."""
+    """Logs a heartbeat message every 5 minutes and checks GraphQL hello query."""
     log_path = "/tmp/crm_heartbeat_log.txt"
     now = datetime.now().strftime("%d/%m/%Y-%H:%M:%S")
 
     try:
-        # Try hitting the GraphQL hello endpoint
+        # Check if GraphQL endpoint is responsive
         transport = RequestsHTTPTransport(
             url="http://localhost:8000/graphql/",
             verify=True,
             retries=3,
         )
+
         client = Client(transport=transport, fetch_schema_from_transport=True)
 
         query = gql("""
@@ -36,7 +37,7 @@ def log_crm_heartbeat():
         """)
 
         result = client.execute(query)
-        message = result.get("hello", "GraphQL endpoint not responsive")
+        message = result.get("hello", "No response from GraphQL endpoint")
     except Exception as e:
         message = f"GraphQL check failed: {e}"
 
