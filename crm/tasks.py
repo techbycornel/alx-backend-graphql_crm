@@ -1,21 +1,20 @@
 from celery import shared_task
+from datetime import datetime
 import requests
-import datetime
 
 @shared_task
-def generatecrmreport():
+def generate_crm_report():
     try:
-        # Example of what the report generation could do
+        # Example task logic (you can replace this with real report logic)
         response = requests.get("https://example.com/api/customers")
-        report_data = response.json()
+        data = response.json()
 
-        with open("/tmp/crmreportlog.txt", "a") as log_file:
-            log_file.write(f"{datetime.datetime.now()} - Report generated successfully\n")
-            log_file.write(f"Fetched {len(report_data)} customer records\n")
-
-        return "CRM report generated and logged successfully."
+        # Log success
+        with open("/tmp/crm_report_log.txt", "a") as f:
+            f.write(f"{datetime.now()} - Successfully generated report with {len(data)} records\n")
 
     except Exception as e:
-        with open("/tmp/crmreportlog.txt", "a") as log_file:
-            log_file.write(f"{datetime.datetime.now()} - Error: {str(e)}\n")
+        # Log any errors
+        with open("/tmp/crm_report_log.txt", "a") as f:
+            f.write(f"{datetime.now()} - Error: {str(e)}\n")
         raise e
