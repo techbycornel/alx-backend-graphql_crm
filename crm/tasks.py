@@ -1,46 +1,21 @@
 from celery import shared_task
-from datetime import datetime
-from gql import gql, Client
-from gql.transport.requests import RequestsHTTPTransport
+import requests
+import datetime
 
 @shared_task
-def generate_crm_report():
-    """
-    Weekly CRM Report: total customers, total orders, total revenue.
-    Logs results to /tmp/crm_report_log.txt
-    """
-    # Configure GraphQL transport
-    transport = RequestsHTTPTransport(
-        url="http://localhost:8000/graphql/",  # adjust if your server runs elsewhere
-        verify=True,
-        retries=3,
-    )
-
-    client = Client(transport=transport, fetch_schema_from_transport=True)
-
-    # GraphQL query
-    query = gql("""
-        query {
-            totalCustomers
-            totalOrders
-            totalRevenue
-        }
-    """)
-
+def generatecrmreport():
     try:
-        result = client.execute(query)
-        customers = result.get("totalCustomers", 0)
-        orders = result.get("totalOrders", 0)
-        revenue = result.get("totalRevenue", 0)
+        # Example of what the report generation could do
+        response = requests.get("https://example.com/api/customers")
+        report_data = response.json()
 
-        log_message = (
-            f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - "
-            f"Report: {customers} customers, {orders} orders, {revenue} revenue\n"
-        )
+        with open("/tmp/crmreportlog.txt", "a") as log_file:
+            log_file.write(f"{datetime.datetime.now()} - Report generated successfully\n")
+            log_file.write(f"Fetched {len(report_data)} customer records\n")
 
-        with open("/tmp/crm_report_log.txt", "a") as f:
-            f.write(log_message)
+        return "CRM report generated and logged successfully."
 
     except Exception as e:
-        with open("/tmp/crm_report_log.txt", "a") as f:
-            f.write(f"{datetime.now()} - ERROR: {str(e)}\n")
+        with open("/tmp/crmreportlog.txt", "a") as log_file:
+            log_file.write(f"{datetime.datetime.now()} - Error: {str(e)}\n")
+        raise e
