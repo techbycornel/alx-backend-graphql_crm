@@ -2,6 +2,15 @@ from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 import datetime
 
+def log_crm_heartbeat():
+    """
+    Logs a heartbeat message to confirm the CRM system is alive.
+    """
+    log_file = "/tmp/crm_heartbeat_log.txt"
+    with open(log_file, "a") as log:
+        log.write(f"{datetime.datetime.now()} - CRM heartbeat: system alive\n")
+
+
 def update_low_stock():
     """
     Calls the GraphQL mutation to update low stock products
