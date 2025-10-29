@@ -1,32 +1,38 @@
-from datetime import datetime
 from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
+import datetime
 
-def log_crm_heartbeat():
-    """Logs a heartbeat message every 5 minutes and checks GraphQL hello query."""
-    log_path = "/tmp/crm_heartbeat_log.txt"
-    now = datetime.now().strftime("%d/%m/%Y-%H:%M:%S")
+def update_low_stock():
+    """
+    Calls the GraphQL mutation to update low stock products
+    and logs the process to /tmp/low_stock_updates_log.txt
+    """
+    log_file = "/tmp/low_stock_updates_log.txt"
 
     try:
-        # Configure the GraphQL client
         transport = RequestsHTTPTransport(
             url="http://localhost:8000/graphql/",
-            verify=True,
+            verify=False,
             retries=3,
         )
+
         client = Client(transport=transport, fetch_schema_from_transport=True)
 
-        # Optional GraphQL query to verify the hello field
+        # GraphQL mutation
         query = gql("""
-        query {
-            hello
-        }
+            mutation {
+                updateLowStockProducts {
+                    success
+                    message
+                }
+            }
         """)
 
-        result = client.execute(query)
-        message = result.get("hello", "GraphQL endpoint not responsive")
-    except Exception as e:
-        message = f"GraphQL check failed: {e}"
+        response = client.execute(query)
 
-    with open(log_path, "a") as f:
-        f.write(f"{now} CRM is alive — {message}\n")
+        with open(log_file, "a") as log:
+            log.write(f"{datetime.datetime.now()} - updateLowStockProducts executed successfully: {response}\n")
+
+    except Exception as e:
+        with open(log_file, "a") as log:
+            log.write(f"{datetime.datetime.now()} - Error running updateLowStockProducts: {str(e)}\n")
